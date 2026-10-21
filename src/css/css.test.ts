@@ -4,6 +4,7 @@ import {independentBytes} from './byteStep';
 import {recover} from '../attack/divide';
 import {verify} from '../verify/verify';
 import {extrapolate} from '../attack/rate';
+import {step} from './lfsr';
 
 describe('Boneh–Shoup CSS construction',()=>{
   it('two independently written stepping routes agree on 1000 keys across 256 bytes',()=>{
@@ -18,6 +19,25 @@ describe('Boneh–Shoup CSS construction',()=>{
   it('the first 3 bytes determine the second seed for every guessed first seed',()=>{
     const known=generate({s1:0xabcd,s2:0x928b0e},3).map(f=>f.z);
     expect(recover(known).candidates).toHaveLength(65536);
+  });
+  it('measures the 17-bit period and proves the 25-bit polynomial has maximal order',()=>{
+    const small={state:0x10000,size:17 as const,taps:[14,0]};
+    let period=0;do{step(small);period++}while(small.state!==0x10000&&period<=131071);
+    expect(period).toBe(131071);
+    // An independent GF(2)[x] route for x^25 + x^12 + x^4 + x^3 + 1.
+    const poly=(1<<25)|(1<<12)|(1<<4)|(1<<3)|1;
+    const mul=(left:number,right:number)=>{
+      let product=0;
+      for(let j=0;j<25;j++){
+        if(right&1)product^=left;
+        right>>>=1;left<<=1;if(left&(1<<25))left^=poly;
+      }
+      return product;
+    };
+    const power=(exponent:number)=>{let result=1,x=2;for(;exponent>0;exponent>>>=1,x=mul(x,x))if(exponent&1)result=mul(result,x);return result};
+    const order=2**25-1;
+    expect(power(order)).toBe(1);
+    for(const prime of [31,601,1801])expect(power(order/prime)).not.toBe(1);
   });
   it.each([false,true])('recovers and independently checks the full key, alternate bit order %s',(order)=>{
     const key={s1:0xb25c,s2:0x456a89};
