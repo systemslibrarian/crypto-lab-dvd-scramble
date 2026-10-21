@@ -1,27 +1,13 @@
-import AxeBuilder from '@axe-core/playwright';
-import {expect,test,type Page} from '@playwright/test';
-
-const WCAG=['wcag2a','wcag2aa','wcag21a','wcag21aa'];
-async function scan(page:Page){
-  await expect(page.locator('main#app h1')).toHaveCount(1);
-  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
-  expect(overflow,'WCAG 1.4.10: no horizontal scroll at viewport width').toBe(false);
-  const result=await new AxeBuilder({page}).withTags(WCAG).analyze();
-  expect(result.violations.map(v=>`${v.id}: ${v.nodes.map(n=>n.target.join(',')).join('; ')}`)).toEqual([]);
-  expect(result.incomplete.filter(v=>WCAG.some(t=>v.tags.includes(t))).map(v=>v.id),'axe must decide WCAG checks, not leave inconclusive contrast').toEqual([]);
-  const best=await new AxeBuilder({page}).withRules(['region','landmark-one-main']).analyze();
-  expect(best.violations.map(v=>v.id)).toEqual([]);
-  const rgb=await page.evaluate(()=>{const h=getComputedStyle(document.documentElement),b=getComputedStyle(document.body);return [h.backgroundColor,b.color]});
-  expect(rgb[0]).not.toBe('rgba(0, 0, 0, 0)');
-}
-for(const width of [1280,380])test(`production page: reachable states pass WCAG A/AA at ${width}px`,async({page})=>{
-  test.setTimeout(120000);
-  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.setViewportSize({width,height:850});
-  await page.emulateMedia({reducedMotion:'reduce'});
-  await page.goto('./');await expect(page.locator('#exhibit section').first()).toBeVisible();
-  expect(await page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
-  await scan(page);
-  await page.getByRole('button',{name:'Break this sample'}).click();await expect(page.locator('#attack-out')).toContainText(/tried|WORK|Undetermined/);await scan(page);await page.locator('#known-count').fill('3');await expect(page.locator('#attack-out')).toContainText('Retired');await scan(page);
-  expect(errors).toEqual([]);
+import {expect,test} from '@playwright/test';
+import {boot,scan,watchPageErrors,expectBaselineNotStale,reportCollected} from './gate';
+for(const width of [1280,320])test(`production page: reachable states pass WCAG A/AA at ${width}px`,async({page})=>{
+ test.setTimeout(900000);const errors=watchPageErrors(page);await page.setViewportSize({width,height:900});await boot(page);await scan(page,'arrival');
+ await page.locator('#clock').click();await scan(page,'clocked byte');
+ await page.locator('#break-button').click();await expect(page.locator('#break-button')).toBeEnabled();await scan(page,'recovery or public ambiguity');
+ await page.locator('#known-count').fill('3');await scan(page,'retired inputs');await page.locator('#break-button').click();await expect(page.locator('#break-button')).toBeEnabled();await scan(page,'three-byte ambiguity');
+ await page.getByText('Supply public bytes by hand',{exact:true}).click();await page.locator('#manual-bytes').fill('00 00');await page.locator('#break-button').click();await scan(page,'short input refused');
+ await page.locator('#manual-bytes').fill('00 00 00 00 00 00 00 00');await page.locator('#break-button').click();await expect(page.locator('#break-button')).toBeEnabled();await scan(page,'zero survivors');
+ await page.evaluate(()=>{document.getElementById('break-button')!.click();document.getElementById('cancel')!.click()});await scan(page,'cancelled search');
+ await page.locator('#profile').click();await expect(page.locator('#profile')).toBeEnabled({timeout:30000});await scan(page,'survivor histogram');
+ await page.getByText('Sources and related labs',{exact:true}).click();await scan(page,'sources open');await page.locator('.cl-skip-link').focus();await scan(page,'focused skip link');expect(errors).toEqual([]);expectBaselineNotStale();reportCollected();
 });

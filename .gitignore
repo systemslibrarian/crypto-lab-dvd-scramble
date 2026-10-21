@@ -3,3 +3,6 @@ dist/
 test-results/
 playwright-report/
 chat.md
+mutation-results.json
+/.vitest/
+/.mutation-unit-report.json
