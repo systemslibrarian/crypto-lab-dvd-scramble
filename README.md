@@ -45,9 +45,10 @@ npm test
 npm run build
 npx playwright install chromium
 npm run test:a11y
+npm run test:mutations
 ```
 
-5 unit tests; 1,000 independently generated keys × 256 bytes checked across two implementations, plus key recovery under both byte conventions. The book variant has no published KAT, so the test routes are independent re-derivations. The Playwright suite scans reachable desktop and mobile states for WCAG 2.1 A/AA issues and independently rederives displayed claims. GitHub Actions runs unit tests, production build and browser gate before deploying; it also gates Dependabot pull requests, groups minor/patch npm updates and dispatches a deploy after an automated merge.
+6 unit tests; 1,000 independently generated keys × 256 bytes checked across two implementations, plus key recovery under both byte conventions. The book variant has no published KAT, so the test routes are independent re-derivations. The replayable mutation harness contains 6 concrete source patches. Each run first passes its named baseline test, requires a non-empty diff, a successful build and changed JavaScript bundle hash, then requires the owning test to fail and restores the original hash. The Playwright suite scans reachable desktop and mobile states for WCAG 2.1 A/AA issues and independently rederives displayed claims. GitHub Actions runs unit tests, production build and browser gate before deploying; it also gates Dependabot pull requests, groups minor/patch npm updates and dispatches a deploy after an automated merge.
 
 ## Performance
 

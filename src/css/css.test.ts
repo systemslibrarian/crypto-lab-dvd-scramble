@@ -31,4 +31,12 @@ describe('Boneh–Shoup CSS construction',()=>{
     expect(()=>recover([1,2])).toThrow();
     expect(extrapolate(65536,1000).bruteSeconds).toBe(2**40/65536);
   });
+  it('verifies every public and private continuation byte before a key claim',()=>{
+    const key={s1:0,s2:0},bytes=generate(key,38).map(f=>f.z);
+    expect(verify(key,bytes.slice(0,6),bytes.slice(6))).toBe(true);
+    const publicTamper=bytes.slice(0,6);publicTamper[5]^=1;
+    expect(verify(key,publicTamper,bytes.slice(6))).toBe(false);
+    const privateTamper=bytes.slice(6);privateTamper[31]^=1;
+    expect(verify(key,bytes.slice(0,6),privateTamper)).toBe(false);
+  });
 });

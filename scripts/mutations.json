@@ -1,0 +1,45 @@
+[
+  {
+    "name": "adder carry omitted",
+    "file": "src/css/css.ts",
+    "from": "const sum = x + y + carry;",
+    "to": "const sum = x + y;",
+    "test": "two independently written stepping routes"
+  },
+  {
+    "name": "forced high bit omitted",
+    "file": "src/css/css.ts",
+    "from": "state: 0x10000 | key.s1",
+    "to": "state: key.s1",
+    "test": "two independently written stepping routes"
+  },
+  {
+    "name": "subtraction uses only sixteen bits",
+    "file": "src/attack/divide.ts",
+    "from": "const y=(z-x)&0xffffff;",
+    "to": "const y=(z-x)&0xffff;",
+    "test": "recovers and independently checks"
+  },
+  {
+    "name": "verifier ignores sixth public byte",
+    "file": "src/verify/verify.ts",
+    "from": "return [...known,...continuation].every",
+    "to": "return [...known,...continuation].slice(0,5).every",
+    "test": "verifies every public and private continuation byte"
+  },
+  {
+    "name": "brute rate uses 2^39",
+    "file": "src/attack/rate.ts",
+    "from": "bruteSeconds:2**40/perSecond",
+    "to": "bruteSeconds:2**39/perSecond",
+    "test": "refuses fewer than three bytes and projects"
+  },
+  {
+    "name": "search worker never receives observations",
+    "file": "src/main.ts",
+    "from": "worker.postMessage({bytes:observations,msbFirst:order});",
+    "to": "void observations;",
+    "test": "rendered 40-bit recovery",
+    "browser": true
+  }
+]
