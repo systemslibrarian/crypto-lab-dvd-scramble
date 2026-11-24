@@ -9,7 +9,7 @@ Implements the bit-serial, two-LFSR Content Scrambling System generator in Boneh
 1. Clock the 17-bit and 25-bit registers and watch their bytes, carry and output.
 2. Supply three to eight known bytes; a worker enumerates 65,536 smaller-register seeds and counts the actual survivors.
 3. Independently verify the recovered key against 32 unseen output bytes.
-4. Measure search throughput and extrapolate a 2^40 brute-force time, labelled as an extrapolation.
+4. Measure candidate throughput. The full-space time estimate assumes equal per-candidate cost for two different procedures. The count ratio alone cannot establish a runtime speedup.
 
 ## When to Use It
 

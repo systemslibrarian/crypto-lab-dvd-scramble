@@ -43,3 +43,10 @@ test('search worker receives exactly the public bytes and no private continuatio
 test('manual unique candidate remains unverified without private bytes and short input refuses',async({page})=>{
  await fixed(page);const known=await page.locator('#observed').innerText();await manual(page,known);const text=await search(page);expect(text).toContain('One public candidate');expect(text).not.toContain('Recovered key:');await page.locator('#manual-bytes').fill('00 00');expect(await search(page)).toContain('Supply 3 to 64 known output bytes');
 });
+
+test('the timing lesson states the equal-cost assumption before any measurement', async ({ page }) => {
+  await page.goto('./');
+  const panel = page.getByRole('region', { name: '4 · Compare the work' });
+  await expect(panel).toContainText('assumes each full-key trial costs as much as one candidate');
+  await expect(panel).toContainText('The ratio compares candidate counts');
+});
